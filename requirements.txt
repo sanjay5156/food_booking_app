@@ -1,0 +1,7 @@
+# Only Flask itself and a couple of small pure-Python libraries are needed —
+# authentication, the database layer and the daily-report scheduler are all
+# built on Python's own standard library (sqlite3, threading, smtplib) so
+# this installs cleanly even on a machine with restricted internet access.
+Flask>=3.0,<4.0
+openpyxl>=3.1,<4.0
+python-dotenv>=1.0,<2.0

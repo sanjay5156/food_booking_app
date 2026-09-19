@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Employee Database</h2>
+
+<div class="card">
+  <h3>Add Employee</h3>
+  <form method="POST" action="{{ url_for('admin.employees_add') }}">
+    <div class="grid grid-3">
+      <div><label>Employee ID</label><input type="text" name="employee_code" required placeholder="EMP006"></div>
+      <div><label>Name</label><input type="text" name="name" required></div>
+      <div><label>Department</label><input type="text" name="department" required></div>
+      <div><label>Age</label><input type="number" name="age" min="16" max="80"></div>
+      <div>
+        <label>Sex</label>
+        <select name="sex">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Default Food Preference</label>
+        <select name="food_preference">
+          <option value="Veg">Veg</option>
+          <option value="Non-Veg">Non-Veg</option>
+        </select>
+      </div>
+      <div>
+        <label>Plant</label>
+        <select name="plant">
+          {% for p in plants %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn" type="submit">Add Employee</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>All Employees ({{ employees|length }})</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Sex</th><th>Department</th><th>Preference</th><th>Plant</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for e in employees %}
+        <tr>
+          <td>{{ e.employee_code }}</td>
+          <td><input form="edit-{{ e.id }}" type="text" name="name" value="{{ e.name }}" style="min-width:140px"></td>
+          <td><input form="edit-{{ e.id }}" type="number" name="age" value="{{ e.age or '' }}" style="width:70px"></td>
+          <td>
+            <select form="edit-{{ e.id }}" name="sex" style="width:90px">
+              <option value="Male" {{ 'selected' if e.sex=='Male' }}>Male</option>
+              <option value="Female" {{ 'selected' if e.sex=='Female' }}>Female</option>
+              <option value="Other" {{ 'selected' if e.sex=='Other' }}>Other</option>
+            </select>
+          </td>
+          <td><input form="edit-{{ e.id }}" type="text" name="department" value="{{ e.department }}" style="min-width:120px"></td>
+          <td>
+            <select form="edit-{{ e.id }}" name="food_preference" style="width:100px">
+              <option value="Veg" {{ 'selected' if e.food_preference=='Veg' }}>Veg</option>
+              <option value="Non-Veg" {{ 'selected' if e.food_preference=='Non-Veg' }}>Non-Veg</option>
+            </select>
+          </td>
+          <td>
+            <select form="edit-{{ e.id }}" name="plant" style="min-width:130px">
+              {% for p in plants %}<option value="{{ p }}" {{ 'selected' if e.plant==p }}>{{ p }}</option>{% endfor %}
+            </select>
+          </td>
+          <td>{{ 'Active' if e.is_active else 'Inactive' }}</td>
+          <td style="white-space:nowrap">
+            <form id="edit-{{ e.id }}" method="POST" action="{{ url_for('admin.employees_edit', emp_id=e.id) }}" style="display:none"></form>
+            <button form="edit-{{ e.id }}" class="btn small secondary" type="submit">Save</button>
+            <form method="POST" action="{{ url_for('admin.employees_toggle', emp_id=e.id) }}" style="display:inline">
+              <button class="btn small {{ 'danger' if e.is_active else '' }}" type="submit">{{ 'Deactivate' if e.is_active else 'Activate' }}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="help-text">New employees automatically get a login account: username = Employee ID, default password = Employee ID (they should change it after first login).</p>
+</div>
+{% endblock %}

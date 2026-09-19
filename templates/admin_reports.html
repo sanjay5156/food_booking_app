@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Consumption Reports</h2>
+
+<div class="card">
+  <div class="filters-bar">
+    <div>
+      <label>Period</label>
+      <select id="rep-period">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </div>
+    <div><label>Anchor Date</label><input type="date" id="rep-date"></div>
+    <div>
+      <label>Plant</label>
+      <select id="rep-plant">
+        <option value="">All</option>
+        {% for p in plants %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Department</label>
+      <select id="rep-department">
+        <option value="">All</option>
+        {% for d in departments %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Target</label>
+      <select id="rep-target">
+        <option value="">All</option>
+        <option value="Self">Self (Employee)</option>
+        <option value="Guest">Guest</option>
+      </select>
+    </div>
+    <div><button class="btn" id="rep-refresh">Refresh</button></div>
+  </div>
+  <div id="rep-range" class="help-text"></div>
+</div>
+
+<div class="grid grid-3">
+  <div class="card stat-tile"><div class="num" id="stat-total">–</div><div class="label">Total meals</div></div>
+  <div class="card stat-tile"><div class="num" id="stat-self">–</div><div class="label">Employee (self)</div></div>
+  <div class="card stat-tile"><div class="num" id="stat-guest">–</div><div class="label">Guest</div></div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Plant-wise Consumption</h3>
+    <div id="chart-plant" class="bar-chart"></div>
+  </div>
+  <div class="card">
+    <h3>Department-wise Consumption</h3>
+    <div id="chart-department" class="bar-chart"></div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Meal Type Breakdown</h3>
+    <div id="chart-meal" class="bar-chart"></div>
+  </div>
+  <div class="card">
+    <h3>Veg / Non-Veg / Snacks Breakdown</h3>
+    <div id="chart-foodtype" class="bar-chart"></div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Self vs Guest</h3>
+    <div id="chart-target" class="bar-chart"></div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function renderBarChart(container, dataObj) {
+  const entries = Object.entries(dataObj).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) { container.innerHTML = '<p class="help-text">No data for this period.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]));
+  container.innerHTML = entries.map(([label, value]) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(value / max * 100).toFixed(1)}%"></div></div>
+      <div class="bar-value">${value}</div>
+    </div>
+  `).join("");
+}
+
+async function loadReport() {
+  const period = document.getElementById("rep-period").value;
+  const dateVal = document.getElementById("rep-date").value;
+  const department = document.getElementById("rep-department").value;
+  const target = document.getElementById("rep-target").value;
+  const plant = document.getElementById("rep-plant").value;
+
+  const params = new URLSearchParams({ period });
+  if (dateVal) params.set("date", dateVal);
+  if (department) params.set("department", department);
+  if (target) params.set("target", target);
+  if (plant) params.set("plant", plant);
+
+  const res = await fetch(`/api/reports/summary?${params.toString()}`);
+  const data = await res.json();
+
+  document.getElementById("rep-range").textContent = `Showing ${data.start}${data.end !== data.start ? " to " + data.end : ""}`;
+  document.getElementById("stat-total").textContent = data.total_meals;
+  document.getElementById("stat-self").textContent = data.by_target["Self"] || 0;
+  document.getElementById("stat-guest").textContent = data.by_target["Guest"] || 0;
+
+  renderBarChart(document.getElementById("chart-plant"), data.by_plant);
+  renderBarChart(document.getElementById("chart-department"), data.by_department);
+  renderBarChart(document.getElementById("chart-meal"), data.by_meal_type);
+  renderBarChart(document.getElementById("chart-foodtype"), data.by_food_type);
+  renderBarChart(document.getElementById("chart-target"), data.by_target);
+}
+
+document.getElementById("rep-refresh").addEventListener("click", loadReport);
+document.getElementById("rep-period").addEventListener("change", loadReport);
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("rep-date").value = new Date().toISOString().slice(0, 10);
+  loadReport();
+});
+</script>
+{% endblock %}

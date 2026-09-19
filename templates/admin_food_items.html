@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Menu Items{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Food Menu Items</h2>
+
+<div class="card">
+  <h3>Add Item</h3>
+  <form method="POST" action="{{ url_for('admin.food_items_add') }}" id="add-item-form">
+    <div class="grid grid-3">
+      <div>
+        <label>Meal Type</label>
+        <select name="meal_type" id="add-meal-type" required>
+          <option value="">Select…</option>
+          {% for mt in meal_types %}<option value="{{ mt }}">{{ mt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Food Type</label>
+        <select name="food_type" id="add-food-type" required disabled>
+          <option value="">Select meal type first…</option>
+        </select>
+      </div>
+      <div>
+        <label>Item Name</label>
+        <input type="text" name="item_name" required placeholder="e.g. Cutlet">
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn" type="submit">Add Item</button></div>
+  </form>
+</div>
+
+{% for meal_type in meal_types %}
+<div class="card">
+  <h3>{{ meal_type }}</h3>
+  {% for food_type in meal_type_food_types[meal_type] %}
+    <p style="margin-bottom:0.3rem"><strong>{{ food_type }}</strong></p>
+    <div class="table-wrap" style="margin-bottom:1rem">
+      <table>
+        <thead><tr><th>Item</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for item in grouped.get(meal_type, {}).get(food_type, []) %}
+          <tr>
+            <td>{{ item.item_name }}</td>
+            <td>{{ 'Active' if item.is_active else 'Inactive' }}</td>
+            <td style="white-space:nowrap">
+              <form method="POST" action="{{ url_for('admin.food_items_toggle', item_id=item.id) }}" style="display:inline">
+                <button class="btn small secondary" type="submit">{{ 'Deactivate' if item.is_active else 'Activate' }}</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.food_items_delete', item_id=item.id) }}" style="display:inline" onsubmit="return confirm('Delete this item permanently?');">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="help-text">No items yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  const MEAL_TYPE_FOOD_TYPES = {{ meal_type_food_types | tojson }};
+  const mealSel = document.getElementById("add-meal-type");
+  const foodSel = document.getElementById("add-food-type");
+  mealSel.addEventListener("change", () => {
+    const types = MEAL_TYPE_FOOD_TYPES[mealSel.value] || [];
+    if (!types.length) {
+      foodSel.disabled = true;
+      foodSel.innerHTML = '<option value="">Select meal type first…</option>';
+      return;
+    }
+    foodSel.disabled = false;
+    foodSel.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join("");
+  });
+</script>
+{% endblock %}

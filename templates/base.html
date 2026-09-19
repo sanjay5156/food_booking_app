@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Food Booking System{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<div class="topnav no-print">
+  <div class="brand-group">
+    <a class="brand" href="{{ url_for('admin.dashboard' if current_user.is_admin else 'booking.dashboard') }}">🍽 Food Booking System</a>
+    <span class="welcome-msg">{{ current_user.welcome_message }}</span>
+  </div>
+  <nav>
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint=='admin.dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('admin.employees_list') }}" class="{{ 'active' if request.endpoint=='admin.employees_list' }}">Employees</a>
+      <a href="{{ url_for('admin.food_items_list') }}" class="{{ 'active' if request.endpoint=='admin.food_items_list' }}">Menu Items</a>
+      <a href="{{ url_for('reports.reports_page') }}" class="{{ 'active' if request.endpoint=='reports.reports_page' }}">Reports</a>
+      <a href="{{ url_for('reports.ledger_view') }}" class="{{ 'active' if request.endpoint=='reports.ledger_view' }}">View / Print</a>
+      <a href="{{ url_for('admin.settings_page') }}" class="{{ 'active' if request.endpoint=='admin.settings_page' }}">Settings</a>
+      <a href="{{ url_for('booking.dashboard') }}">Book Food</a>
+    {% else %}
+      <a href="{{ url_for('booking.dashboard') }}" class="{{ 'active' if request.endpoint=='booking.dashboard' }}">Book Food</a>
+    {% endif %}
+    <a href="{{ url_for('auth.change_password') }}">Change Password</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
+  </nav>
+  <span class="userinfo">{{ current_user.username }} ({{ 'Admin' if current_user.is_admin else 'Employee' }})</span>
+</div>
+{% endif %}
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}View / Print Ledger{% endblock %}
+{% block content %}
+
+<div class="card no-print">
+  <h2 style="margin-top:0">View / Print Booking Ledger</h2>
+  <form method="GET" class="filters-bar">
+    <div><label>From</label><input type="date" name="start" value="{{ start.isoformat() }}"></div>
+    <div><label>To</label><input type="date" name="end" value="{{ end.isoformat() }}"></div>
+    <div>
+      <label>Plant</label>
+      <select name="plant">
+        <option value="">All</option>
+        {% for p in plants %}<option value="{{ p }}" {{ 'selected' if plant==p }}>{{ p }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Department</label>
+      <select name="department">
+        <option value="">All</option>
+        {% for d in departments %}<option value="{{ d }}" {{ 'selected' if department==d }}>{{ d }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Target</label>
+      <select name="target">
+        <option value="">All</option>
+        <option value="Self" {{ 'selected' if target=='Self' }}>Self (Employee)</option>
+        <option value="Guest" {{ 'selected' if target=='Guest' }}>Guest</option>
+      </select>
+    </div>
+    <div><button class="btn" type="submit">Apply Filters</button></div>
+    <div><button class="btn secondary" type="button" onclick="window.print()">Print</button></div>
+    <div>
+      <a class="btn secondary" href="{{ url_for('reports.export_excel', start=start.isoformat(), end=end.isoformat(), department=department or '', target=target or '', plant=plant or '') }}">Download Excel</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Catering Sheet: {{ start.isoformat() }}{% if end != start %} to {{ end.isoformat() }}{% endif %}</h2>
+  {% if plant %}<p>Plant: <strong>{{ plant }}</strong></p>{% endif %}
+  {% if department %}<p>Department: <strong>{{ department }}</strong></p>{% endif %}
+  {% if target %}<p>Target: <strong>{{ target }}</strong></p>{% endif %}
+
+  {% set total_qty = bookings | sum(attribute='quantity') %}
+  <p><strong>Total meals: {{ total_qty }}</strong> across {{ bookings|length }} booking record(s).</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Meal</th><th>Food Type</th><th>Item</th><th>Target</th>
+          <th>Employee</th><th>Department</th><th>Plant</th><th>Guest Type</th><th>Qty</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td>{{ b.booking_date.isoformat() }}</td>
+          <td>{{ b.meal_type }}</td>
+          <td>{{ b.food_type }}</td>
+          <td>{{ b.item_name or '—' }}</td>
+          <td>{{ b.target }}</td>
+          <td>{% if b.employee %}{{ b.employee.employee_code }} — {{ b.employee.name }}{% else %}—{% endif %}</td>
+          <td>{{ b.department }}</td>
+          <td>{{ b.plant }}</td>
+          <td>{{ b.guest_classification or '—' }}</td>
+          <td>{{ b.quantity }}</td>
+          <td>{{ b.status }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="11" class="help-text">No bookings found for this filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Admin Dashboard — {{ today.strftime('%A, %d %B %Y') }}</h2>
+
+<div class="grid grid-4">
+  <div class="card stat-tile"><div class="num">{{ total_today }}</div><div class="label">Meals booked today</div></div>
+  <div class="card stat-tile"><div class="num">{{ self_today }}</div><div class="label">Employee (self) meals</div></div>
+  <div class="card stat-tile"><div class="num">{{ guest_today }}</div><div class="label">Guest meals</div></div>
+  <div class="card stat-tile"><div class="num">{{ employee_count }}</div><div class="label">Active employees</div></div>
+</div>
+
+<div class="grid grid-3">
+  <div class="card">
+    <h3>Employees</h3>
+    <p class="help-text">Add employees, set department & default food preference.</p>
+    <a class="btn secondary" href="{{ url_for('admin.employees_list') }}">Manage Employees</a>
+  </div>
+  <div class="card">
+    <h3>Menu Items</h3>
+    <p class="help-text">{{ food_item_count }} active items across Breakfast, Lunch, Snacks & Dinner.</p>
+    <a class="btn secondary" href="{{ url_for('admin.food_items_list') }}">Manage Menu</a>
+  </div>
+  <div class="card">
+    <h3>Today's Catering Sheet</h3>
+    <p class="help-text">View or print what needs to be prepared today.</p>
+    <a class="btn secondary" href="{{ url_for('reports.ledger_view') }}">View / Print</a>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Reports</h3>
+    <p class="help-text">Daily, weekly & monthly consumption — department-wise and guest-wise.</p>
+    <a class="btn secondary" href="{{ url_for('reports.reports_page') }}">Open Reports</a>
+  </div>
+  <div class="card">
+    <h3>Automated Email Report</h3>
+    <p class="help-text">Configure the recipient address and the daily send time.</p>
+    <a class="btn secondary" href="{{ url_for('admin.settings_page') }}">Open Settings</a>
+  </div>
+</div>
+{% endblock %}

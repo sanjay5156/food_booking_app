@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Settings</h2>
+
+<div class="card narrow">
+  <h3>Automated Excel Email Reports</h3>
+  <p class="help-text">
+    Three booking ledgers are emailed automatically each day, as soon as booking for those meals
+    closes — 5 minutes after the relevant cutoff below (Booking Cutoff Times card). There's no
+    separate time to set for these; they follow the cutoffs automatically.
+  </p>
+  <ul class="help-text" style="margin:0 0 1rem 1.1rem; padding:0">
+    <li><strong>Lunch</strong> report — sends at {{ report_trigger_times.lunch }} (5 min after Lunch's cutoff)</li>
+    <li><strong>Snacks</strong> report — sends at {{ report_trigger_times.snacks }} (5 min after Snacks' cutoff)</li>
+    <li><strong>Dinner + next-day Breakfast</strong> report — sends at {{ report_trigger_times.dinner_breakfast }} (5 min after Dinner's cutoff)</li>
+  </ul>
+
+  <form method="POST" action="{{ url_for('admin.settings_page') }}">
+    <input type="hidden" name="form" value="report">
+    <label>Company / Plant Name</label>
+    <input type="text" name="company_name" value="{{ settings.get('company_name', '') }}">
+
+    <label>Report Recipient Email</label>
+    <input type="email" name="report_admin_email" value="{{ settings.get('report_admin_email', '') }}" placeholder="admin@yourcompany.com">
+
+    <div class="btn-row">
+      <button class="btn" type="submit">Save Settings</button>
+    </div>
+  </form>
+
+  <p class="help-text" style="margin-top:1rem">Send any report right now, without waiting for its cutoff (useful for testing):</p>
+  <div class="btn-row">
+    {% for key in report_keys %}
+    <form method="POST" action="{{ url_for('reports.send_meal_now', report_key=key) }}" style="display:inline">
+      <button class="btn secondary" type="submit">Send {{ report_labels[key] }} Now</button>
+    </form>
+    {% endfor %}
+    <form method="POST" action="{{ url_for('reports.send_now') }}" style="display:inline">
+      <button class="btn secondary" type="submit">Send Full Day Ledger Now</button>
+    </form>
+  </div>
+
+  <div class="hint-box" style="margin-top:1rem">
+    The automatic email requires the SMTP server details to be set in the app's <code>.env</code> file
+    (SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD). See README.md for setup instructions and for the
+    alternative cron / Task Scheduler method for extra reliability — changing a cutoff time changes
+    when these reports send too, but a cron-based setup would need its own times updated to match.
+  </div>
+</div>
+
+<div class="card narrow">
+  <h3>Booking Cutoff Times</h3>
+  <p class="help-text">
+    Once a meal's cutoff has passed, employees can no longer book (or the calendar simply won't
+    let them pick) that meal for that date — this is enforced on save, not just shown as guidance.
+    Admin accounts are not subject to cutoffs, so you can still adjust bookings after the deadline.
+  </p>
+  <form method="POST" action="{{ url_for('admin.settings_page') }}">
+    <input type="hidden" name="form" value="cutoffs">
+    <label>Breakfast — hours before cutoff</label>
+    <input type="number" name="breakfast_cutoff_hours_before" min="0" max="72" step="1"
+           value="{{ cutoffs.breakfast_cutoff_hours_before }}">
+
+    <label>Breakfast — reference time (usually breakfast service time)</label>
+    <input type="time" name="breakfast_reference_time" value="{{ cutoffs.breakfast_reference_time }}">
+    <p class="help-text">
+      Breakfast is booked the evening before. {{ cutoff_descriptions.Breakfast }}
+    </p>
+
+    <label>Lunch — cutoff time (same day)</label>
+    <input type="time" name="lunch_cutoff_time" value="{{ cutoffs.lunch_cutoff_time }}">
+    <p class="help-text">{{ cutoff_descriptions.Lunch }}</p>
+
+    <label>Snacks — cutoff time (same day)</label>
+    <input type="time" name="snacks_cutoff_time" value="{{ cutoffs.snacks_cutoff_time }}">
+    <p class="help-text">{{ cutoff_descriptions.Snacks }}</p>
+
+    <label>Dinner — cutoff time (same day)</label>
+    <input type="time" name="dinner_cutoff_time" value="{{ cutoffs.dinner_cutoff_time }}">
+    <p class="help-text">{{ cutoff_descriptions.Dinner }}</p>
+
+    <div class="btn-row">
+      <button class="btn" type="submit">Save Cutoff Times</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

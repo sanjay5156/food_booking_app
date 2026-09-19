@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Book Food{% endblock %}
+{% block content %}
+
+<script>
+  window.MEAL_TYPE_FOOD_TYPES = {{ meal_type_food_types | tojson }};
+  window.MEAL_TYPES = {{ meal_types | tojson }};
+  window.DEPARTMENTS = {{ departments | tojson }};
+  window.PLANTS = {{ plants | tojson }};
+  window.MEAL_CUTOFFS = {{ meal_cutoffs | tojson }};
+  window.IS_EMPLOYEE = {{ 'true' if current_user.employee_id else 'false' }};
+  {% if current_user.employee_id %}
+  window.CURRENT_EMPLOYEE = {
+    code: {{ current_user.employee.employee_code | tojson }},
+    name: {{ current_user.employee.name | tojson }},
+    department: {{ current_user.employee.department | tojson }},
+    food_preference: {{ current_user.employee.food_preference | tojson }},
+    plant: {{ current_user.employee.plant | tojson }}
+  };
+  {% else %}
+  window.CURRENT_EMPLOYEE = null;
+  {% endif %}
+</script>
+
+{% if current_user.employee_id %}
+<div class="card">
+  <h2>My Continuous Food Preference</h2>
+  <p class="help-text">
+    Company-provided daily meals follow this preference automatically every day until you change it here.
+  </p>
+  <div class="radio-toggle" id="pref-toggle" style="max-width:340px">
+    <label id="pref-veg-label"><input type="radio" name="pref" value="Veg"> Veg</label>
+    <label id="pref-nonveg-label"><input type="radio" name="pref" value="Non-Veg"> Non-Veg</label>
+  </div>
+  <div id="pref-status" class="help-text"></div>
+</div>
+{% endif %}
+
+<div class="grid grid-2">
+  {% if current_user.employee_id %}
+  <div class="card">
+    <h2>Book Food for Myself</h2>
+    <p class="help-text">Plant: <strong>{{ current_user.employee.plant }}</strong> (set by admin on your employee record)</p>
+    <label>Meal Type</label>
+    <select id="self-meal-type">
+      <option value="">Select meal type…</option>
+      {% for mt in meal_types %}<option value="{{ mt }}">{{ mt }}</option>{% endfor %}
+    </select>
+    <div class="help-text" id="self-cutoff-note"></div>
+
+    <label>Food Type</label>
+    <select id="self-food-type" disabled><option value="">Select meal type first…</option></select>
+
+    <label>Specific Item (optional)</label>
+    <select id="self-item-name" disabled><option value="">Any / Chef's choice</option></select>
+
+    <label>Select Date(s)</label>
+    <p class="help-text">Click a date to toggle it. Click-and-drag across dates to select a range. Click one date, then Shift+click another, to select every date in between — the food type above applies to all of them. Dates greyed out with a line through them are past that meal's booking cutoff.</p>
+    <div class="calendar" id="self-calendar"></div>
+    <div class="selected-dates-summary" id="self-selected-summary">No dates selected.</div>
+
+    <div class="btn-row">
+      <button class="btn" id="self-book-btn">Book Selected Dates</button>
+      <button class="btn secondary" id="self-clear-btn" type="button">Clear Selection</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Book Food for Guest(s)</h2>
+    <p class="help-text">Any employee can book meals for visitors on behalf of a department.</p>
+
+    <label>Date</label>
+    <input type="date" id="guest-date">
+
+    <label>Plant</label>
+    <select id="guest-plant">
+      <option value="">Select plant…</option>
+      {% for p in plants %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+    </select>
+    <p class="help-text">Which plant this guest is visiting — shows on the catering sheet and reports.</p>
+
+    <label>Meal Type</label>
+    <select id="guest-meal-type">
+      <option value="">Select meal type…</option>
+      {% for mt in meal_types %}<option value="{{ mt }}">{{ mt }}</option>{% endfor %}
+    </select>
+    <div class="help-text" id="guest-cutoff-note"></div>
+
+    <label>Food Type</label>
+    <select id="guest-food-type" disabled><option value="">Select meal type first…</option></select>
+
+    <label>Specific Item (optional)</label>
+    <select id="guest-item-name" disabled><option value="">Any / Chef's choice</option></select>
+
+    <label>Number of Meals</label>
+    <input type="number" id="guest-quantity" min="1" value="1">
+
+    <label>Department</label>
+    <input type="text" id="guest-department" list="dept-list" placeholder="e.g. Production">
+    <datalist id="dept-list">
+      {% for d in departments %}<option value="{{ d }}">{% endfor %}
+    </datalist>
+
+    <label>Guest Type</label>
+    <input type="text" id="guest-classification" placeholder="e.g. Client visit, Vendor, Interview candidate">
+
+    <label>Note (optional)</label>
+    <textarea id="guest-note" rows="2" placeholder="Any additional detail"></textarea>
+
+    <div class="btn-row">
+      <button class="btn" id="guest-book-btn">Book for Guest(s)</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>My Recent Bookings</h2>
+  <div class="table-wrap">
+    <table id="my-bookings-table">
+      <thead>
+        <tr><th>Date</th><th>Meal</th><th>Type</th><th>Item</th><th>Target</th><th>Qty</th><th>Department</th><th>Plant</th><th>Guest Type</th><th></th></tr>
+      </thead>
+      <tbody><tr><td colspan="10" class="help-text">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}
